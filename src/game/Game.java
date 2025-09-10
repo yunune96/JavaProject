@@ -37,13 +37,35 @@ public class Game {
             connect(grid, 0,2, 1,2);
 
             grid[0][0].setDescription("성의 입구. 사방으로 길이 얽혀 있다.");
+            grid[0][1].setDescription("낡은 회랑. 낮은 속삭임이 들린다.");
+            grid[0][2].setDescription("창고 구역. 무언가 반짝인다.");
+            grid[1][0].setDescription("빈 방이지만 싸늘한 기운이 감돈다.");
+            grid[1][1].setDescription("이정표가 지워진 교차로.");
+            grid[1][2].setDescription("파손된 무기고. 상자 몇 개가 남아 있다.");
+            grid[2][0].setDescription("버려진 숙소. 침대 프레임 아래가 수상하다.");
+            grid[2][2].setDescription("교차 통로. 피비린내가 난다.");
+            grid[2][3].setDescription("좁고 긴 복도. 경비가 순찰 중이다.");
+            grid[3][1].setDescription("좁은 회랑. 금화가 흩어져 있다.");
+            grid[3][3].setDescription("보스의 방! 어둠의 기운이 요동친다.");
+
+            // 아이템 배치
             grid[0][2].addItem(new Item("단검", "가벼운 무기."));
             grid[1][2].addItem(new Item("포션", "체력을 회복(연출용)."));
+            grid[2][0].addItem(new Item("보스열쇠", "보스의 방을 여는 열쇠."));
+            grid[3][1].addItem(new Item("금화", "빛나는 금화 몇 닢."));
+
+            // 몬스터 배치
             grid[1][0].setMonster(new Monster("해골 병사", 20, 5, false));
             grid[2][2].setMonster(new Monster("동굴 트롤", 30, 6, false));
             grid[2][3].setMonster(new Monster("보스의 경비", 25, 6, false));
+            grid[3][1].setMonster(new Monster("야생 늑대", 16, 4, false));
             grid[3][3].setMonster(new Monster("어둠의 군주", 60, 8, true));
-            grid[0][0].setNpc("수호자", "보스는 (3,3)에 있다. 미로를 헤쳐 나가라.");
+
+            // 보스방 잠금
+            grid[3][3].lockWithItem("보스열쇠");
+
+            // NPC 힌트
+            grid[0][0].setNpc("수호자", "보스는 남동쪽 어딘가에 있다. 열쇠는 숙소에 있다.");
             this.startRoom = grid[0][0];
             currentRoom = grid[0][0];
         } else {
@@ -60,13 +82,30 @@ public class Game {
             connect(grid, 1,2, 1,3);
 
             grid[0][0].setDescription("성의 후문. 남쪽으로 어두운 통로가 보인다.");
-            grid[3][0].setDescription("무너진 벽 너머 밝은 빛.");
+            grid[1][0].setDescription("낡은 경비초소. 부서진 무기가 널려 있다.");
+            grid[1][1].setDescription("교차로. 남쪽에서 바람이 분다.");
+            grid[2][1].setDescription("축축한 회랑. 시체가 꿈틀거린다.");
+            grid[2][2].setDescription("큰 전투의 흔적. 땅이 움푹 패였다.");
+            grid[3][0].setDescription("버려진 숙소. 먼지가 수북하다.");
+            grid[3][2].setDescription("어두운 복도. 긴장감이 감돈다.");
+            grid[3][3].setDescription("보스의 방! 어둠의 기운이 요동친다.");
+
+            // 아이템 배치
             grid[1][0].addItem(new Item("단검", "가벼운 무기."));
-            grid[1][2].addItem(new Item("포션", "체력을 회복(연출용)."));
+            grid[2][0].addItem(new Item("포션", "체력을 회복(연출용)."));
+            grid[3][0].addItem(new Item("보스열쇠", "보스의 방을 여는 열쇠."));
+
+            // 몬스터 배치
             grid[2][1].setMonster(new Monster("좀비 병사", 18, 4, false));
             grid[2][2].setMonster(new Monster("미노타우로스", 35, 7, false));
+            grid[3][2].setMonster(new Monster("보스의 경비", 25, 6, false));
             grid[3][3].setMonster(new Monster("어둠의 군주", 60, 8, true));
-            grid[0][0].setNpc("정찰병", "보스는 남동쪽 끝에 있다. 조심해라.");
+
+            // 보스방 잠금
+            grid[3][3].lockWithItem("보스열쇠");
+
+            // NPC 힌트
+            grid[0][0].setNpc("정찰병", "보스는 남동쪽 어딘가에 있다. 열쇠는 숙소에 있다.");
             this.startRoom = grid[0][0];
             currentRoom = grid[0][0];
         }
@@ -154,6 +193,11 @@ public class Game {
     }
 
     public String movePlayer(String direction) {
+        // 현재 방에 살아있는 몬스터가 있으면 이동 금지
+        Monster cur = currentRoom.getMonster();
+        if (cur != null && !cur.isDead()) {
+            return "몬스터가 길을 가로막습니다. 먼저 처치하세요. (몬스터: " + cur.getName() + ")";
+        }
         Room nextRoom = currentRoom.getExit(direction);
         if (nextRoom != null) {
             if (nextRoom.isLocked()) {
@@ -162,7 +206,22 @@ public class Game {
             currentRoom = nextRoom;
             player.moveTo(nextRoom);
             visitedRooms.add(currentRoom);
-            return currentRoom.getDescription();
+            String desc = currentRoom.getDescription();
+            // 입장 시 살아있는 몬스터 알림
+            Monster mHere = currentRoom.getMonster();
+            if (mHere != null && !mHere.isDead()) {
+                desc += System.lineSeparator() + "몬스터가 나타났다: " + mHere.getName() + " (체력 " + mHere.getHealth() + ")";
+            }
+            boolean nearBoss = false;
+            for (Room r : new Room[]{currentRoom.getExit("북쪽"), currentRoom.getExit("남쪽"), currentRoom.getExit("동쪽"), currentRoom.getExit("서쪽")}) {
+                if (r != null && r.getMonster() != null && r.getMonster().isBoss()) {
+                    nearBoss = true; break;
+                }
+            }
+            if (nearBoss) {
+                desc += System.lineSeparator() + "강한 기운이 느껴진다. 보스의 기척이 가까이 있다!";
+            }
+            return desc;
         } else {
             return "그 방향으로는 갈 수 없습니다.";
         }
