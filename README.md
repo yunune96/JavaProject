@@ -1,6 +1,9 @@
 ## 텍스트 어드벤처 게임 (Java)
 
-간단한 텍스트 기반 어드벤처 게임 예제입니다. `Room`, `Item`, `Player`, `Game` 클래스로 구성되어 있으며 기본 명령어(종료, 이동, 봐)를 지원합니다.
+간단한 텍스트 기반 어드벤처 게임 예제입니다. `Room`, `Item`, `Player`, `Game` 클래스로 구성되어 있으며 기본 명령어(종료, 이동, 현재 상황)를 지원합니다.
+
+### 기술 스택
+>![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)
 
 ### 프로젝트 구조
 
