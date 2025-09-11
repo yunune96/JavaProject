@@ -12,14 +12,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * 간단한 미니맵 패널: 방문한 방과 현재 위치를 표시합니다.
- * 방은 격자상의 노드로 그려지고, 출구 방향(동/서/남/북)에 따라 선으로 연결됩니다.
- */
 public class MapPanel extends JPanel {
     private final Game game;
 
-    // 좌표 배치: 선형 맵(0..9)을 x축으로 배치
     private final Map<Room, int[]> roomToGrid = new HashMap<>();
 
     public MapPanel(Game game) {
@@ -47,7 +42,6 @@ public class MapPanel extends JPanel {
 
         Set<Room> visited = new HashSet<>(game.getVisitedRooms());
         Room current = game.getCurrentRoomRef();
-        // 가시 범위: 방문 방 + 현재 방의 인접 방(직접 연결된 방)
         Set<Room> visible = new HashSet<>(visited);
         if (current != null) {
             visible.add(current);
@@ -56,10 +50,9 @@ public class MapPanel extends JPanel {
             }
         }
 
-        int cell = 80; // 격자 한 칸 크기
+        int cell = 80;
         int radius = 18;
 
-        // 연결선 그리기 (가시 범위 내 방 간 출구)
         g2.setColor(new Color(200, 200, 200));
         for (Room r : visible) {
             int[] pos = roomToGrid.get(r);
@@ -68,7 +61,7 @@ public class MapPanel extends JPanel {
             int cy = 40 + pos[1] * cell;
             for (Map.Entry<String, Room> e : r.getExits().entrySet()) {
                 Room neighbor = e.getValue();
-                if (!visible.contains(neighbor)) continue; // 가시 범위 내에서만 연결
+                if (!visible.contains(neighbor)) continue; 
                 int[] npos = roomToGrid.get(neighbor);
                 if (npos == null) continue;
                 int nx = 40 + npos[0] * cell;
@@ -77,7 +70,6 @@ public class MapPanel extends JPanel {
             }
         }
 
-        // 노드(방) 그리기 (가시 범위)
         for (Room r : visible) {
             int[] pos = roomToGrid.get(r);
             if (pos == null) continue;
@@ -91,12 +83,19 @@ public class MapPanel extends JPanel {
             g2.fillRect(x, y, radius * 2, radius * 2);
             g2.setColor(Color.BLACK);
             g2.drawRect(x, y, radius * 2, radius * 2);
+
+            if (r.getMonster() != null && !r.getMonster().isDead()) {
+                g2.setColor(new Color(200, 50, 50));
+                g2.fillOval(x + 3, y + 3, 10, 10);
+            }
+            if (!r.getItems().isEmpty()) {
+                g2.setColor(new Color(230, 160, 40));
+                g2.fillOval(x + radius * 2 - 13, y + radius * 2 - 13, 10, 10);
+            }
         }
 
-        // 범례/레이블
         g2.setFont(g2.getFont().deriveFont(Font.PLAIN, 12f));
         g2.setColor(Color.DARK_GRAY);
-        g2.drawString("파랑 = 현재 위치", 10, getHeight() - 12);
     }
 }
 

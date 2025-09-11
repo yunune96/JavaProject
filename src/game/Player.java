@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+
 public class Player {
     private Room currentRoom;
     private final List<Item> inventory = new ArrayList<>();
     private int health = 100;
+    private int weaponBonusDamage = 0;
+    private final java.util.Random attackRng = new java.util.Random();
 
     public Player(Room startingRoom) {
         this.currentRoom = startingRoom;
@@ -43,6 +46,36 @@ public class Player {
 
     public void heal(int amount) {
         health = Math.min(100, health + amount);
+    }
+
+    public int getAttackDamage() {
+        int base = 8 + attackRng.nextInt(3);
+        return Math.max(0, base + weaponBonusDamage);
+    }
+
+
+    public boolean hasItemByName(String itemName) {
+        for (Item i : inventory) {
+            if (i.getName().equalsIgnoreCase(itemName)) return true;
+        }
+        return false;
+    }
+
+    public boolean equipWeapon(String itemName) {
+        if (!hasItemByName(itemName)) return false;
+        int bonus = computeWeaponBonus(itemName);
+        if (bonus == Integer.MIN_VALUE) return false; 
+        weaponBonusDamage = bonus;
+        return true;
+    }
+
+    public boolean isWeaponName(String itemName) {
+        return computeWeaponBonus(itemName) != Integer.MIN_VALUE;
+    }
+
+    private int computeWeaponBonus(String itemName) {
+        if ("단검".equalsIgnoreCase(itemName)) return 5;
+        return Integer.MIN_VALUE;
     }
 }
 
