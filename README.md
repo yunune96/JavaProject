@@ -15,7 +15,7 @@
 ## 실행
 
 - javac -d out src/game/\*.java
-- java -cp out game.GameUI
+- java -cp "out;lib/\*" game.GameUI
 
 ## 시드와 재현성
 

@@ -1,20 +1,55 @@
 package game;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public class HighscoreRepository {
     private final String dbUrl;
     private final String dbUser;
     private final String dbPassword;
     private static final DateTimeFormatter DATE_MIN_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    private static final Properties DOTENV = new Properties();
+    static {
+        try {
+            Path path = Paths.get(".env");
+            if (Files.exists(path)) {
+                try (BufferedReader reader = Files.newBufferedReader(path)) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        String trimmed = line.trim();
+                        if (trimmed.isEmpty()) continue;
+                        if (trimmed.startsWith("#") || trimmed.startsWith(";")) continue;
+                        if (trimmed.startsWith("export ")) trimmed = trimmed.substring(7).trim();
+                        int idx = trimmed.indexOf('=');
+                        if (idx < 1) continue;
+                        String key = trimmed.substring(0, idx).trim();
+                        String value = trimmed.substring(idx + 1).trim();
+                        if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
+                            value = value.substring(1, value.length() - 2 + 1); // 안전한 양끝 따옴표 제거
+                        }
+                        if (!DOTENV.containsKey(key)) {
+                            DOTENV.setProperty(key, value);
+                        }
+                    }
+                }
+            }
+        } catch (IOException ignore) {
+        }
+    }
 
     public HighscoreRepository() {
         String host = envOrDefault("MYSQL_HOST", "127.0.0.1");
@@ -145,7 +180,9 @@ public class HighscoreRepository {
     }
 
     private static String envOrDefault(String key, String def) {
-        String v = System.getenv(key);
+        String v = System.getProperty(key);
+        if (v == null || v.isEmpty()) v = DOTENV.getProperty(key);
+        if (v == null || v.isEmpty()) v = System.getenv(key);
         if (v == null || v.isEmpty()) return def;
         return v;
     }
