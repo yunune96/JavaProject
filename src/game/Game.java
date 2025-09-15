@@ -12,10 +12,6 @@ public class Game {
     private long endTimeMs;
     private boolean cleared;
 
-    public void setupGame() {
-        setupGame(2);
-    }
-
     public void setupGame(int seedId) {
         Room[][] grid = new Room[4][4];
         for (int y = 0; y < 4; y++) {

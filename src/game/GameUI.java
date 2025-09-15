@@ -28,7 +28,6 @@ public class GameUI extends JFrame {
         int seed = (int)(System.currentTimeMillis() & 0x7fffffff);
         this.game.setupGame(seed);
 
-        // 실행 시 DB 초기화: 테이블 생성 등 준비
         this.repo = new HighscoreRepository();
         this.repo.init();
 
