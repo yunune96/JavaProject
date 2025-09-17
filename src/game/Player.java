@@ -75,7 +75,12 @@ public class Player {
 
     private int computeWeaponBonus(String itemName) {
         if ("단검".equalsIgnoreCase(itemName)) return 5;
+        if ("장검".equalsIgnoreCase(itemName)) return 10;
         return Integer.MIN_VALUE;
+    }
+
+    public int getWeaponBonusDamage() {
+        return weaponBonusDamage;
     }
 }
 

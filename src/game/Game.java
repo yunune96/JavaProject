@@ -11,6 +11,7 @@ public class Game {
     private long startTimeMs;
     private long endTimeMs;
     private boolean cleared;
+    private java.util.SplittableRandom rng;
 
     public void setupGame(int seedId) {
         Room[][] grid = new Room[4][4];
@@ -22,6 +23,7 @@ public class Game {
             }
         }
         this.worldSeed = seedId;
+        this.rng = new java.util.SplittableRandom((((long) seedId) << 32) ^ System.nanoTime());
         generateRandomDungeon(grid, 4, 4, seedId);
         this.startRoom = grid[0][0];
         currentRoom = grid[0][0];
@@ -32,6 +34,12 @@ public class Game {
         startTimeMs = System.currentTimeMillis();
         endTimeMs = 0L;
         cleared = false;
+    }
+
+    private int rollTriangular(int minInclusive, int maxInclusive) {
+        int a = rng.nextInt(minInclusive, maxInclusive + 1);
+        int b = rng.nextInt(minInclusive, maxInclusive + 1);
+        return (a + b) / 2;
     }
 
     public int getSeedId() {
@@ -220,7 +228,9 @@ public class Game {
         if (m == null) {
             return "공격할 대상이 없습니다.";
         }
-        int dmg = player.getAttackDamage();
+        int base = 9; // 평균치(기존 8~10의 중앙)
+        int variance = rollTriangular(-2, 2);
+        int dmg = Math.max(0, base + player.getWeaponBonusDamage() + variance);
         m.damage(dmg);
         StringBuilder sb = new StringBuilder();
         sb.append(m.getName()).append("에게 ").append(dmg).append("의 피해를 입혔습니다. (남은 체력: ").append(m.getHealth()).append(")");
@@ -237,7 +247,8 @@ public class Game {
             return sb.toString();
         }
         int monsterBase = m.getAttackDamage();
-        int monsterHit = Math.max(0, monsterBase - new java.util.Random().nextInt(3)); 
+        int monsterVar = rollTriangular(-2, 2);
+        int monsterHit = Math.max(0, monsterBase + monsterVar); 
         player.damage(monsterHit);
         sb.append(System.lineSeparator()).append(m.getName()).append("의 반격! ").append(monsterHit).append(" 피해를 입었습니다. (체력: ").append(player.getHealth()).append(")");
         if (player.getHealth() <= 0) {
@@ -478,11 +489,13 @@ public class Game {
             }
         }
         if (path.size() > 1) {
+            String weaponName = rng.nextBoolean() ? "장검" : "단검";
+            String weaponDesc = "장검".equals(weaponName) ? "묵직한 장검." : "가벼운 무기.";
             for (int i = 1; i < path.size(); i++) {
                 int[] p = path.get(i);
                 if ((p[0] == bx && p[1] == by) || (p[0] == keyX && p[1] == keyY)) continue;
                 Room r = grid[p[1]][p[0]];
-                if (canPlaceItem(r)) { r.addItem(new Item("단검", "가벼운 무기.")); break; }
+                if (canPlaceItem(r)) { r.addItem(new Item(weaponName, weaponDesc)); break; }
             }
         }
         if (path.size() > 2) {
